@@ -1,0 +1,3 @@
+dbPath=./src/main/resources
+bindPath=./src/main/resources
+logLevel=DEBUG
