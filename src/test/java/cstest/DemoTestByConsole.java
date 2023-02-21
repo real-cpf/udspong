@@ -1,4 +1,4 @@
-package before;
+package cstest;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -9,14 +9,13 @@ import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.channel.unix.DomainSocketChannel;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 public class DemoTestByConsole {
-  public static void main(String[] args) throws IOException, InterruptedException {
+  public static void main(String[] args) throws InterruptedException {
     DomainSocketAddress address = new DomainSocketAddress("/tmp/uds.sock");
     EventLoopGroup clientGroup = new EpollEventLoopGroup();
 
@@ -39,7 +38,6 @@ public class DemoTestByConsole {
             @Override
             public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
               System.out.println("client read complate");
-              super.channelReadComplete(ctx);
             }
           });
         }
@@ -50,17 +48,14 @@ public class DemoTestByConsole {
       while (true){
         String line = in.readLine();
         if (null != line && !"quit".equals(line)) {
-          String[] kvs = line.split(" ");
-          channel.writeAndFlush(Unpooled.copiedBuffer(String.format(".%s\r\n.%s\r\n",kvs[0],kvs[1]).getBytes())).sync();
+          channel.writeAndFlush(Unpooled.copiedBuffer(String.format(">two =%s\r\n",line).getBytes())).sync();
         } else {
           break;
         }
       }
 
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
-
-
-
-
   }
 }

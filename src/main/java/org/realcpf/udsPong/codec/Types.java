@@ -9,6 +9,7 @@ public enum Types {
   COMMAND((byte)':'), // get
   GET_KEY((byte)'='), // get key
   BYTE_VALUE((byte)'.'),// byte value
+  ROUTE_VALUE((byte)'>'),
 
   SHUT_DOWN((byte)'*');
 
@@ -26,6 +27,7 @@ public enum Types {
       case '=' -> GET_KEY;
       case '.' -> BYTE_VALUE;
       case '*' -> SHUT_DOWN;
+      case '>' -> ROUTE_VALUE;
       default -> null;
     };
   }

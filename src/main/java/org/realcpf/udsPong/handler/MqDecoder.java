@@ -5,10 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.ByteProcessor;
 import org.realcpf.udsPong.Main;
-import org.realcpf.udsPong.codec.ByteMessage;
-import org.realcpf.udsPong.codec.Message;
-import org.realcpf.udsPong.codec.StringMessage;
-import org.realcpf.udsPong.codec.Types;
+import org.realcpf.udsPong.codec.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +53,17 @@ public class MqDecoder extends ByteToMessageDecoder {
       }
       case BYTE_VALUE -> {
         return Optional.of(new ByteMessage(dataBuf));
+      }
+      case ROUTE_VALUE -> {
+        final int index1 = dataBuf.forEachByte(ByteProcessor.FIND_ASCII_SPACE);
+        if (0 > index1) {
+          return Optional.empty();
+        }
+        ByteBuf routeByteBufKey = dataBuf.readSlice(index1);
+        ByteBuf routeByteBufMsg = dataBuf.readSlice(dataBuf.readableBytes());
+        RouteMessage routeMessage = new RouteMessage(
+          routeByteBufKey.toString(StandardCharsets.UTF_8),new ByteMessage((routeByteBufMsg)));
+        return Optional.of(routeMessage);
       }
       default -> {
         return Optional.empty();
