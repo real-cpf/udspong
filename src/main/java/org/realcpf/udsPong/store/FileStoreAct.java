@@ -99,7 +99,7 @@ public final class FileStoreAct implements AutoCloseable {
         long start = Long.parseLong(lines[0]);
         long len = Long.parseLong(lines[1]);
         String keyName = lines[2];
-        System.out.println(keyName);
+        LOGGER.info("load key from file {}",keyName);
         map.put(keyName,new MateKey(start,len));
         byteBuf.readByte();
         last = index + 1;

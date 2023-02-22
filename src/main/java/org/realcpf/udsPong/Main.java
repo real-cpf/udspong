@@ -25,7 +25,7 @@ import java.nio.file.Path;
 public class Main {
   private final static Logger LOGGER = LoggerFactory.getLogger(Main.class);
   public static Path UDS_FD_PATH = Path.of("/tmp/uds.sock");
-  public static Channel channel;
+
   public static ServerBootstrap server;
   public static EventLoopGroup eventExecutors = new EpollEventLoopGroup();
   public static EventLoopGroup eventLoopGroup = new EpollEventLoopGroup();
@@ -37,9 +37,10 @@ public class Main {
     } else {
       path = UDS_FD_PATH;
     }
-    start(path);
+    Channel channel = start(path);
     LOGGER.info("start..on {}",path);
     LoadConfig.getInstance().load(args[0]);
+    assert channel != null;
     channel.closeFuture().sync();
   }
 
@@ -57,7 +58,7 @@ public class Main {
     }
   }
 
-  private static void start(Path path) {
+  public static Channel start(Path path) {
     try {
 
       if (Files.exists(path)) {
@@ -79,9 +80,10 @@ public class Main {
             p.addLast(new MqHandler());
           }
         });
-      channel = server.bind(new DomainSocketAddress(path.toString())).sync().channel();
+      return server.bind(new DomainSocketAddress(path.toString())).sync().channel();
     } catch (Exception e) {
       LOGGER.error("error when bind path:",e);
     }
+    return null;
   }
 }

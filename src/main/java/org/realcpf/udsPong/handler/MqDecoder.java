@@ -1,11 +1,15 @@
 package org.realcpf.udsPong.handler;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.ByteProcessor;
+import io.netty.util.ReferenceCountUtil;
 import org.realcpf.udsPong.Main;
 import org.realcpf.udsPong.codec.*;
+import org.realcpf.udsPong.node.NodeConf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +36,7 @@ public class MqDecoder extends ByteToMessageDecoder {
         LOGGER.info("shutdown {}", LocalDateTime.now());
         Main.exit();
       }
-      Optional<Message> optionalMessage = translate(in, currType);
+      Optional<Message> optionalMessage = translate(in, currType,ctx);
       optionalMessage.ifPresent(out::add);
       if (in.readableBytes() < 1) {
         break;
@@ -40,7 +44,7 @@ public class MqDecoder extends ByteToMessageDecoder {
     }
   }
 
-  private Optional<Message> translate(ByteBuf in, Types types) {
+  private Optional<Message> translate(ByteBuf in, Types types,ChannelHandlerContext ctx) {
     final int index = in.forEachByte(ByteProcessor.FIND_LF);
     if (0 > index) {
       return Optional.empty();
@@ -61,9 +65,24 @@ public class MqDecoder extends ByteToMessageDecoder {
         }
         ByteBuf routeByteBufKey = dataBuf.readSlice(index1);
         ByteBuf routeByteBufMsg = dataBuf.readSlice(dataBuf.readableBytes());
-        RouteMessage routeMessage = new RouteMessage(
-          routeByteBufKey.toString(StandardCharsets.UTF_8),new ByteMessage((routeByteBufMsg)));
-        return Optional.of(routeMessage);
+
+        String channelName = routeByteBufKey.toString(StandardCharsets.UTF_8);
+        Optional<Channel> dstChannel = NodeConf.getInstance().getChannel(channelName);
+        dstChannel.ifPresent(c->{
+          ReferenceCountUtil.retain(routeByteBufMsg);
+          c.writeAndFlush(routeByteBufMsg);
+        });
+        LOGGER.info("route to {} done",channelName);
+        ByteBuf resBuf = ctx.alloc().buffer(4);
+        resBuf.writeCharSequence("R_D",StandardCharsets.UTF_8);
+        ctx.channel().writeAndFlush(resBuf);
+        return Optional.empty();
+      }
+      case REG_C -> {
+        String channelName = dataBuf.toString(StandardCharsets.UTF_8);
+        NodeConf.getInstance().putChannel(channelName,ctx.channel());
+        LOGGER.info("reg channel name {}",channelName);
+        return Optional.empty();
       }
       default -> {
         return Optional.empty();

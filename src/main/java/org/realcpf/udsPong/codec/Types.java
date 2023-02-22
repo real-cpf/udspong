@@ -11,6 +11,9 @@ public enum Types {
   BYTE_VALUE((byte)'.'),// byte value
   ROUTE_VALUE((byte)'>'),
 
+  REG_C((byte)0x11),
+  UN_REG((byte)0x22),
+
   SHUT_DOWN((byte)'*');
 
   Types(Byte value){
@@ -28,6 +31,7 @@ public enum Types {
       case '.' -> BYTE_VALUE;
       case '*' -> SHUT_DOWN;
       case '>' -> ROUTE_VALUE;
+      case 0x11 -> REG_C;
       default -> null;
     };
   }
