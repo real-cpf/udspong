@@ -1,7 +1,6 @@
 package org.realcpf.udsPong.handler;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -68,20 +67,22 @@ public class MqDecoder extends ByteToMessageDecoder {
 
         String channelName = routeByteBufKey.toString(StandardCharsets.UTF_8);
         Optional<Channel> dstChannel = NodeConf.getInstance().getChannel(channelName);
-        dstChannel.ifPresent(c->{
-          ReferenceCountUtil.retain(routeByteBufMsg);
-          c.writeAndFlush(routeByteBufMsg);
-        });
-        LOGGER.info("route to {} done",channelName);
         ByteBuf resBuf = ctx.alloc().buffer(4);
-        resBuf.writeCharSequence("R_D",StandardCharsets.UTF_8);
+        if (dstChannel.isPresent()) {
+          ReferenceCountUtil.retain(routeByteBufMsg);
+          dstChannel.get().writeAndFlush(routeByteBufMsg);
+          LOGGER.info("route to {} done",channelName);
+          resBuf.writeCharSequence("R_D",StandardCharsets.UTF_8);
+        } else {
+          resBuf.writeCharSequence("N_F",StandardCharsets.UTF_8);
+        }
         ctx.channel().writeAndFlush(resBuf);
         return Optional.empty();
       }
       case REG_C -> {
         String channelName = dataBuf.toString(StandardCharsets.UTF_8);
-        NodeConf.getInstance().putChannel(channelName,ctx.channel());
-        LOGGER.info("reg channel name {}",channelName);
+        NodeConf.getInstance().putOrRemoveChannel(channelName,ctx.channel());
+        LOGGER.info("reg or remove channel name {}",channelName);
         return Optional.empty();
       }
       default -> {
