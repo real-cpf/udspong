@@ -1,23 +1,17 @@
 package org.realcpf.udsPong.handler;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.unix.DomainSocketAddress;
+import org.realcpf.udsPong.Main;
 import org.realcpf.udsPong.codec.*;
+import org.realcpf.udsPong.node.NodeConf;
 import org.realcpf.udsPong.store.FileStoreAct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
-import java.net.StandardProtocolFamily;
-import java.net.UnixDomainSocketAddress;
-import java.nio.channels.SocketChannel;
-import java.util.HashMap;
-import java.util.Map;
 
 public class MqHandler extends ChannelDuplexHandler {
   private final static Logger LOGGER = LoggerFactory.getLogger(MqHandler.class);
@@ -39,20 +33,33 @@ public class MqHandler extends ChannelDuplexHandler {
     } else if(msg instanceof CommandMessage commandMessage){
       Command command = commandMessage.getCommand();
       LOGGER.info("get command from {}",ctx.channel().id());
-      switch (command) {
-        case SHUTDOWN -> {
-          ctx.close().addListener(future -> {
-            if (future.isDone()){
-              ctx.fireChannelRegistered();
-            }
-          });
-        }
-      }
+      processCommand(ctx, command);
     } else {
       System.out.println(msg);
       ctx.write("pong");
     }
     LOGGER.info("handler done");
+  }
+
+  private static void processCommand(ChannelHandlerContext ctx, Command command) {
+    switch (command) {
+      case CLOSE_CONNECTION -> {
+        ctx.close().addListener(future -> {
+          if (future.isDone()){
+            ctx.fireChannelRegistered();
+          }
+        });
+      }
+      case SHUT_DOWN -> {
+        ctx.close().addListener(e->{
+          if (e.isDone()){
+            NodeConf.getInstance().closeAll();
+          }
+        });
+
+        Main.exit();
+      }
+    }
   }
 
   @Override

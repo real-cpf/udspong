@@ -3,6 +3,7 @@ package org.realcpf.udsPong.node;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelOutboundInvoker;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -34,6 +35,9 @@ public final class NodeConf {
 
   public static NodeConf getInstance() {
     return NodeConfInner.INSTANCE;
+  }
+  public void closeAll(){
+    channelMap.values().stream().filter(Channel::isOpen).forEach(ChannelOutboundInvoker::close);
   }
 
   private static class NodeConfInner {
