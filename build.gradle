@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'java-library'
 }
 
 group 'org.realcpf'
@@ -15,6 +16,32 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
+
+
+jar {
+  manifest {
+    attributes(
+      'Implementation-Title': project.name,
+      'Implementation-Version': project.version,
+//      'Main-Class':'org.realcpf.udsPong.Main'
+      'Main-Class':'org.realcpf.udsPong.testM.RunNodeMain'
+    )
+  }
+
+  if (!configurations.runtimeClasspath.isEmpty()) {
+    manifest.attributes('Class-Path':'. lib/' + configurations.runtimeClasspath.collect{
+      it.name
+    }.join(' lib/'))
+  }
+}
+
+
+task copyDependencies(type: Copy) {
+  from configurations.runtimeClasspath
+  into 'build/libs/lib'
+}
+
+jar.dependsOn(copyDependencies)
 
 test {
     useJUnitPlatform()

@@ -31,10 +31,6 @@ public class MqDecoder extends ByteToMessageDecoder {
     Types currType;
     while (null != (currType = Types.from(in))) {
       LOGGER.info("get type {}",currType);
-      if (Types.SHUT_DOWN == currType) {
-        LOGGER.info("shutdown {}", LocalDateTime.now());
-        Main.exit();
-      }
       Optional<Message> optionalMessage = translate(in, currType,ctx);
       optionalMessage.ifPresent(out::add);
       if (in.readableBytes() < 1) {
@@ -54,6 +50,9 @@ public class MqDecoder extends ByteToMessageDecoder {
       case GET_KEY -> {
         return Optional.of(new StringMessage(dataBuf.toString(StandardCharsets.UTF_8)));
       }
+      case COMMAND -> {
+        return Optional.of(new CommandMessage(dataBuf.readByte()));
+      }
       case BYTE_VALUE -> {
         return Optional.of(new ByteMessage(dataBuf));
       }
@@ -62,21 +61,7 @@ public class MqDecoder extends ByteToMessageDecoder {
         if (0 > index1) {
           return Optional.empty();
         }
-        ByteBuf routeByteBufKey = dataBuf.readSlice(index1);
-        ByteBuf routeByteBufMsg = dataBuf.readSlice(dataBuf.readableBytes());
-
-        String channelName = routeByteBufKey.toString(StandardCharsets.UTF_8);
-        Optional<Channel> dstChannel = NodeConf.getInstance().getChannel(channelName);
-        ByteBuf resBuf = ctx.alloc().buffer(4);
-        if (dstChannel.isPresent()) {
-          ReferenceCountUtil.retain(routeByteBufMsg);
-          dstChannel.get().writeAndFlush(routeByteBufMsg);
-          LOGGER.info("route to {} done",channelName);
-          resBuf.writeCharSequence("R_D",StandardCharsets.UTF_8);
-        } else {
-          resBuf.writeCharSequence("N_F",StandardCharsets.UTF_8);
-        }
-        ctx.channel().writeAndFlush(resBuf);
+        tryRoute(ctx, dataBuf, index1);
         return Optional.empty();
       }
       case REG_C -> {
@@ -90,6 +75,24 @@ public class MqDecoder extends ByteToMessageDecoder {
       }
     }
 
+  }
+
+  private static void tryRoute(ChannelHandlerContext ctx, ByteBuf dataBuf, int index1) {
+    ByteBuf routeByteBufKey = dataBuf.readSlice(index1);
+    ByteBuf routeByteBufMsg = dataBuf.readSlice(dataBuf.readableBytes());
+
+    String channelName = routeByteBufKey.toString(StandardCharsets.UTF_8);
+    Optional<Channel> dstChannel = NodeConf.getInstance().getChannel(channelName);
+    ByteBuf resBuf = ctx.alloc().buffer(4);
+    if (dstChannel.isPresent()) {
+      ReferenceCountUtil.retain(routeByteBufMsg);
+      dstChannel.get().writeAndFlush(routeByteBufMsg);
+      LOGGER.info("route to {} done",channelName);
+      resBuf.writeCharSequence("R_D",StandardCharsets.UTF_8);
+    } else {
+      resBuf.writeCharSequence("N_F",StandardCharsets.UTF_8);
+    }
+    ctx.channel().writeAndFlush(resBuf);
   }
 
 

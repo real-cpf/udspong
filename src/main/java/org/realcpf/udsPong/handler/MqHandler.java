@@ -20,13 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MqHandler extends ChannelDuplexHandler {
-  // TODO tmp for use this
-  private final static Map<String, SocketAddress> ROUTE_MAP =  new HashMap<>();
-  static {
-    ROUTE_MAP.put("one",new DomainSocketAddress("/tmp/one.sock"));
-    ROUTE_MAP.put("two",new DomainSocketAddress("/tmp/two.sock"));
-    ROUTE_MAP.put("center",new DomainSocketAddress("/tmp/uds.sock"));
-  }
   private final static Logger LOGGER = LoggerFactory.getLogger(MqHandler.class);
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -43,19 +36,18 @@ public class MqHandler extends ChannelDuplexHandler {
         LOGGER.info("can not found {} in db file",s);
       }
 
-    } else if(msg instanceof RouteMessage routeMessage){
-      if (ROUTE_MAP.containsKey(routeMessage.getRouteKey())) {
-
-        DomainSocketAddress domainSocketAddress = (DomainSocketAddress)ROUTE_MAP.get(routeMessage.getRouteKey()) ;
-
-        ByteMessage message = (ByteMessage) routeMessage.getMessage();
-        tmpConnAndSend(domainSocketAddress.path(),Unpooled.wrappedBuffer(message.warp(),Unpooled.copiedBuffer(new byte[]{'\r','\n'})));
-        LOGGER.info("route to {}",routeMessage.getRouteKey());
-      } else {
-        LOGGER.info("can not found {}",routeMessage.getRouteKey());
+    } else if(msg instanceof CommandMessage commandMessage){
+      Command command = commandMessage.getCommand();
+      LOGGER.info("get command from {}",ctx.channel().id());
+      switch (command) {
+        case SHUTDOWN -> {
+          ctx.close().addListener(future -> {
+            if (future.isDone()){
+              ctx.fireChannelRegistered();
+            }
+          });
+        }
       }
-
-
     } else {
       System.out.println(msg);
       ctx.write("pong");
@@ -71,14 +63,5 @@ public class MqHandler extends ChannelDuplexHandler {
   @Override
   public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
     super.connect(ctx, remoteAddress, localAddress, promise);
-  }
-
-  private static void tmpConnAndSend(String path, ByteBuf buf) {
-    try(SocketChannel socketChannel = SocketChannel.open(StandardProtocolFamily.UNIX)) {
-      socketChannel.connect(UnixDomainSocketAddress.of(path));
-      socketChannel.write(buf.nioBuffer());
-    }catch (Exception e){
-      LOGGER.error("tmpConnAndSend ",e);
-    }
   }
 }

@@ -6,16 +6,13 @@ public enum Types {
 
   KEY_STRING((byte)'+'),
   VALUE_STRING((byte)'-'),
-  COMMAND((byte)':'), // get
+  COMMAND((byte)':'), // like shutdown
   GET_KEY((byte)'='), // get key
   BYTE_VALUE((byte)'.'),// byte value
   ROUTE_VALUE((byte)'>'),
 
   REG_C((byte)0x11),
-  UN_REG((byte)0x22),
-
-  SHUT_DOWN((byte)'*');
-
+  UN_REG((byte)0x22);
   Types(Byte value){
   }
 
@@ -29,7 +26,6 @@ public enum Types {
       case '-' -> VALUE_STRING;
       case '=' -> GET_KEY;
       case '.' -> BYTE_VALUE;
-      case '*' -> SHUT_DOWN;
       case '>' -> ROUTE_VALUE;
       case 0x11 -> REG_C;
       default -> null;

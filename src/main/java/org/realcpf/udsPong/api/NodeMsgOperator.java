@@ -69,6 +69,11 @@ public final class NodeMsgOperator implements AutoCloseable {
     channel.writeAndFlush(buf);
   }
 
+  public ChannelFuture closeConnection(){
+    ByteBuf buf = Unpooled.copiedBuffer(":1\r\n".getBytes(StandardCharsets.UTF_8));
+    return channel.writeAndFlush(buf);
+  }
+
   private void reg(Channel channel) {
     String id = channel.id().asShortText();
     String totalChannelName = String.format(":%s-%s\r\n",getChannelName(),id);
