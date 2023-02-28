@@ -10,14 +10,14 @@ import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.channel.unix.DomainSocketChannel;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.realcpf.udsPong.Main;
+import org.realcpf.udsPong.Center;
 import org.realcpf.udsPong.conf.LoadConfig;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 
@@ -62,10 +62,9 @@ public class TestRoute {
   @Test
   public void run() throws InterruptedException {
 
-
-    LoadConfig.getInstance().load(Path.of("./src/main/resources/config.prop").toAbsolutePath().toString());
-    Channel centerChannel = Main.start(Path.of(address.path()));
-    assert centerChannel != null;
+    CompletableFuture.runAsync(()->{
+      Center.start(Path.of(address.path()),"./src/main/resources/config.prop");
+    });
     Channel regChannel = initClient();
     Channel senderChannel = initClient();
 
@@ -79,9 +78,7 @@ public class TestRoute {
         String.format(">abc =%s-%d\r\n","routeMsg",i).getBytes(StandardCharsets.UTF_8))).await();
 
     }
-
-    centerChannel.closeFuture().await(500, TimeUnit.MILLISECONDS);
-    Main.exit();
+    Center.exit();
     clientGroup.shutdownGracefully();
     Assertions.assertEquals(0,sendValues.size());
   }

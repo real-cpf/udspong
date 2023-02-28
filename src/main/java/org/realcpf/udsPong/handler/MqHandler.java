@@ -4,10 +4,11 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import org.realcpf.udsPong.Main;
+import org.realcpf.udsPong.Center;
 import org.realcpf.udsPong.codec.*;
 import org.realcpf.udsPong.node.NodeConf;
 import org.realcpf.udsPong.store.FileStoreAct;
+import org.realcpf.udsPong.store.StoreEventBus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +19,7 @@ public class MqHandler extends ChannelDuplexHandler {
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     if (msg instanceof KVMessage) {
-      FileStoreAct.getInstance().putByteMessage((KVMessage) msg);
+      StoreEventBus.getInstance().writeMessage((Message) msg);
       ctx.write(Unpooled.copiedBuffer("done".getBytes()));
     } else if (msg instanceof StringMessage stringMessage) {
       String s = stringMessage.warp();
@@ -57,7 +58,7 @@ public class MqHandler extends ChannelDuplexHandler {
           }
         });
 
-        Main.exit();
+        Center.exit();
       }
     }
   }

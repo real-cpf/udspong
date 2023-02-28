@@ -1,6 +1,5 @@
 package org.realcpf.udsPong.testM;
 
-import org.realcpf.udsPong.Main;
 import org.realcpf.udsPong.api.NodeMsgOperator;
 
 import java.io.BufferedReader;

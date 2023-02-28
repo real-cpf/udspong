@@ -8,7 +8,7 @@ import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.channel.unix.DomainSocketChannel;
-import org.realcpf.udsPong.Main;
+import org.realcpf.udsPong.Center;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +18,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 
 public final class NodeMsgOperator implements AutoCloseable {
-  private final static Logger LOGGER = LoggerFactory.getLogger(Main.class);
+  private final static Logger LOGGER = LoggerFactory.getLogger(Center.class);
   private final EventLoopGroup eventExecutors = new EpollEventLoopGroup();
 
   private String channelName;
@@ -66,6 +66,11 @@ public final class NodeMsgOperator implements AutoCloseable {
 
   public void sendToChannel(String channelName,String msg){
     ByteBuf buf = Unpooled.copiedBuffer(String.format(">%s %s\r\n",channelName,msg),StandardCharsets.UTF_8);
+    channel.writeAndFlush(buf);
+  }
+
+  public void sendMessage(String key,String value) {
+    ByteBuf buf = Unpooled.copiedBuffer(String.format(".%s\r\n.%s\r\n",key,value).getBytes(StandardCharsets.UTF_8));
     channel.writeAndFlush(buf);
   }
 
