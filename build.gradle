@@ -1,3 +1,8 @@
+import java.nio.file.FileSystem
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import java.nio.file.Paths
+
 plugins {
     id 'java'
     id 'java-library'
@@ -45,6 +50,23 @@ task copyDependencies(type: Copy) {
   from configurations.runtimeClasspath
   into 'build/libs/lib'
 }
+
+/*
+task copyLICENSE {
+  java.nio.file.Path license = Paths.get(projectDir as String,"license")
+  configurations.runtimeClasspath.forEach {f->{
+    URI uri = URI.create(String.format("jar:file://%s",f))
+    FileSystem fs = FileSystems.getFileSystem(uri);
+    java.nio.file.Path p = fs.getPath("META-INF/LICENSE");
+    if (Files.exists(p)) {
+      Files.copy(p,license.resolve(java.nio.file.Path.of(f.getName().replace(".jar","-LICENSE"))))
+    }
+  }}
+
+}
+
+*/
+
 
 jar.dependsOn(copyDependencies)
 

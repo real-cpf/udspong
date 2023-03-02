@@ -11,9 +11,9 @@ public class TestApi {
 
     operator.init("Channel2", msg -> System.out.println("Channel2:" + msg));
     System.out.println(".");
-    operator.sendToChannel("Channel1","hello world! from Channel1");
-    TimeUnit.SECONDS.sleep(10);
-    operator.unReg();
+    operator.sendToChannel("Channel1","hello world! from Channel2");
+//    TimeUnit.SECONDS.sleep(10);
+//    operator.unReg();
     System.out.println("unreg");
   }
 }

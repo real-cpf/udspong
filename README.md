@@ -7,4 +7,10 @@
 + client register on server
 + client send message by server (route by client channel name)
 
+
+## Scheme
++ find key and end key, then slice
++ fixed type key and body len,then read by len
+
+
 > other is coming soon!

@@ -2,6 +2,7 @@ package org.realcpf.udsPong.api;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.epoll.EpollDomainSocketChannel;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public final class NodeMsgOperator implements AutoCloseable {
@@ -64,15 +66,51 @@ public final class NodeMsgOperator implements AutoCloseable {
     eventExecutors.shutdownGracefully();
   }
 
+//  public void sendToChannel(String channelName,String msg){
+//    ByteBuf buf = Unpooled.copiedBuffer(String.format(">%s %s\r\n",channelName,msg),StandardCharsets.UTF_8);
+//    channel.writeAndFlush(buf);
+//  }
+
   public void sendToChannel(String channelName,String msg){
-    ByteBuf buf = Unpooled.copiedBuffer(String.format(">%s %s\r\n",channelName,msg),StandardCharsets.UTF_8);
+    byte[] cc = channelName.getBytes(StandardCharsets.UTF_8);
+    byte[] vv = msg.getBytes(StandardCharsets.UTF_8);
+    ByteBuf buf = channel.alloc().directBuffer(cc.length + vv.length + 9);
+    buf.writeShort(4);
+    buf.writeInt(cc.length + vv.length +3);
+    buf.writeBytes(cc);
+    buf.writeByte(' ');
+    buf.writeBytes(vv);
+    buf.writeByte('\r');
+    buf.writeByte('\n');
     channel.writeAndFlush(buf);
   }
 
+//  public void sendMessage(String key,String value) {
+//    ByteBuf buf = Unpooled.copiedBuffer(String.format(".%s\r\n.%s\r\n",key,value).getBytes(StandardCharsets.UTF_8));
+//    channel.writeAndFlush(buf);
+//  }
+
   public void sendMessage(String key,String value) {
-    ByteBuf buf = Unpooled.copiedBuffer(String.format(".%s\r\n.%s\r\n",key,value).getBytes(StandardCharsets.UTF_8));
+
+    byte[] kk = key.getBytes(StandardCharsets.UTF_8);
+    byte[] vv = value.getBytes(StandardCharsets.UTF_8);
+    ByteBuf buf = channel.alloc().directBuffer(kk.length + vv.length + 16);
+    buf.writeShort( 3);
+    buf.writeInt(kk.length);
+    buf.writeBytes(kk);
+    buf.writeByte((byte) '\r');
+    buf.writeByte((byte) '\n');
+
+    buf.writeShort( 3);
+    buf.writeInt(vv.length);
+    buf.writeBytes(vv);
+    buf.writeByte((byte) '\r');
+    buf.writeByte((byte) '\n');
+
+
     channel.writeAndFlush(buf);
   }
+
 
   public ChannelFuture closeConnection(){
     ByteBuf buf = Unpooled.copiedBuffer(":1\r\n".getBytes(StandardCharsets.UTF_8));
@@ -87,16 +125,32 @@ public final class NodeMsgOperator implements AutoCloseable {
   public void unReg(){
     reg(this.channel,this.channelName);
   }
+
   private void reg(Channel channel,String name) {
-    byte[] regData = String.format(":%s\r\n",name).getBytes(StandardCharsets.UTF_8);
-    regData[0]=0x11;
+    byte[] nn = name.getBytes(StandardCharsets.UTF_8);
+    ByteBuf buf = channel.alloc().directBuffer(nn.length + 8);
+    buf.writeShort((short) 5);
+    buf.writeInt(nn.length);
+    buf.writeBytes(nn);
+    buf.writeByte('\r');
+    buf.writeByte('\n');
     try {
-      channel.writeAndFlush(Unpooled.copiedBuffer(regData)).sync();
+      channel.writeAndFlush(buf).sync();
     } catch (InterruptedException e) {
       LOGGER.error("reg channel error ",e);
       throw new RuntimeException(e);
     }
   }
+//  private void reg(Channel channel,String name) {
+//    byte[] regData = String.format(":%s\r\n",name).getBytes(StandardCharsets.UTF_8);
+//    regData[0]=0x11;
+//    try {
+//      channel.writeAndFlush(Unpooled.copiedBuffer(regData)).sync();
+//    } catch (InterruptedException e) {
+//      LOGGER.error("reg channel error ",e);
+//      throw new RuntimeException(e);
+//    }
+//  }
 
   private String getChannelName(){
     try {
