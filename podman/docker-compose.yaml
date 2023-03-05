@@ -1,0 +1,22 @@
+version: '3.4'
+
+services:
+  pongMain:
+    image: localhost/pongmain:1.0
+    restart: always
+    volumes:
+      - /tmp:/tmp
+  pongNode1:
+    image: localhost/pongnode:1.0
+    restart: always
+    volumes:
+      - /tmp:/tmp
+    depends_on:
+      - pongMain
+  pongNode2:
+    image: localhost/pongnode:1.0
+    restart: always
+    volumes:
+      - /tmp:/tmp
+    depends_on:
+      - pongMain
