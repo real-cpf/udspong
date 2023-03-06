@@ -9,9 +9,9 @@ public class TestApi {
   public static void main(String[] args) throws InterruptedException {
     NodeMsgOperator operator = NodeMsgOperator.getInstance();
 
-    operator.init("Channel2", msg -> System.out.println("Channel2:" + msg));
+    operator.init("Channel1", msg -> System.out.println("Channel1:" + msg));
     System.out.println(".");
-    operator.sendToChannel("Channel1","hello world! from Channel2");
+    operator.sendToChannel("Channel2","hello world! from Channel2");
 //    TimeUnit.SECONDS.sleep(10);
 //    operator.unReg();
     System.out.println("unreg");

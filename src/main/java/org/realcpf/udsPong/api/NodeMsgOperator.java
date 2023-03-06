@@ -90,6 +90,17 @@ public final class NodeMsgOperator implements AutoCloseable {
 //    channel.writeAndFlush(buf);
 //  }
 
+  public void getMessage(String key) {
+    byte[] kk = key.getBytes(StandardCharsets.UTF_8);
+    ByteBuf buf = channel.alloc().directBuffer(kk.length + 8);
+    buf.writeShort(1);
+    buf.writeInt(kk.length);
+    buf.writeBytes(kk);
+    buf.writeByte('\r');
+    buf.writeByte('\n');
+    channel.writeAndFlush(buf);
+  }
+
   public void sendMessage(String key,String value) {
 
     byte[] kk = key.getBytes(StandardCharsets.UTF_8);

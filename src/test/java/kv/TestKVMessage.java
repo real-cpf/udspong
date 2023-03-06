@@ -15,13 +15,15 @@ public class TestKVMessage {
     operator.init(channelName, System.out::println);
 
     operator.sendMessage("aaa","bbb");
+
 //    IntStream.range(1,10).forEach(e->{
 //      operator.sendMessage("k"+e,"v"+e);
 //    });
 
     TimeUnit.SECONDS.sleep(10);
 
-    operator.close();
+    operator.getMessage("aaa");
+//    operator.close();
 
   }
 }
