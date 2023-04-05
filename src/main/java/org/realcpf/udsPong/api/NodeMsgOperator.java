@@ -72,17 +72,19 @@ public final class NodeMsgOperator implements AutoCloseable {
 //  }
 
   public void sendToChannel(String channelName,String msg){
+
     byte[] cc = channelName.getBytes(StandardCharsets.UTF_8);
     byte[] vv = msg.getBytes(StandardCharsets.UTF_8);
     ByteBuf buf = channel.alloc().directBuffer(cc.length + vv.length + 9);
     buf.writeShort(4);
-    buf.writeInt(cc.length + vv.length +3);
+    buf.writeInt(cc.length + vv.length +1);
     buf.writeBytes(cc);
     buf.writeByte(' ');
     buf.writeBytes(vv);
     buf.writeByte('\r');
     buf.writeByte('\n');
     channel.writeAndFlush(buf);
+    LOGGER.info("send done {}",channelName);
   }
 
 //  public void sendMessage(String key,String value) {
@@ -119,7 +121,9 @@ public final class NodeMsgOperator implements AutoCloseable {
     buf.writeByte((byte) '\n');
 
 
-    channel.writeAndFlush(buf);
+    channel.writeAndFlush(buf).addListener(future -> {
+      System.out.println(future.isDone());
+    });
   }
 
 

@@ -53,20 +53,27 @@ task copyDependencies(type: Copy) {
 
 /*
 task copyLICENSE {
+  HashSet<String> set = new HashSet<>();
   java.nio.file.Path license = Paths.get(projectDir as String,"license")
+  println(license.toAbsolutePath())
   configurations.runtimeClasspath.forEach {f->{
-    URI uri = URI.create(String.format("jar:file://%s",f))
-    FileSystem fs = FileSystems.getFileSystem(uri);
-    java.nio.file.Path p = fs.getPath("META-INF/LICENSE");
-    if (Files.exists(p)) {
-      Files.copy(p,license.resolve(java.nio.file.Path.of(f.getName().replace(".jar","-LICENSE"))))
+    URI uri = URI.create(String.format("jar:file:%s",f))
+    if (!set.contains(f.toString())) {
+      FileSystem fs = FileSystems.newFileSystem(uri,new HashMap<>());
+      java.nio.file.Path p = fs.getPath("/");
+      java.util.Optional<java.nio.file.Path> lp = Files.list(p).filter {it.getFileName().toString().startsWith("LICENSE")}.findFirst();
+      // META-INF/LICENSE
+      if (lp.isPresent() && Files.exists(lp.get())) {
+        Files.copy(lp.get(),license.resolve(java.nio.file.Path.of(f.getName().replace(".jar",""))))
+      }
+      set.add(f.toString())
     }
+
   }}
 
 }
 
 */
-
 
 jar.dependsOn(copyDependencies)
 
